@@ -5,6 +5,9 @@ import java.util.*;
 /**
  * Abstract implementation of graph.
  *
+ * Value of a vertext must be not null.
+ * Not thread safe.
+ *
  * @param <T>
  */
 public abstract class Graph<T> {
@@ -20,8 +23,12 @@ public abstract class Graph<T> {
      * If the vertex already exists in the graph, nothing happens.
      *
      * @param value vertex value
+     * @throws IllegalArgumentException if value is null
      */
     public void addVertex(T value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Value must be not null");
+        }
         vertexes.computeIfAbsent(value, Vertex::new);
     }
 
@@ -40,21 +47,21 @@ public abstract class Graph<T> {
      * @param vertexValueFrom vertex from
      * @param vertexValueTo vertex to
      * @return list of edges. If path does not exist, empty list is returned.
-     * @throws IllegalAccessException if from or to vertex is not in the graph
+     * @throws IllegalAccessException if from or to vertex is null or not in the graph
      */
     public List<Edge<T>> getPath(T vertexValueFrom, T vertexValueTo) {
-        Vertex<T> vertexFrom = getVertex(vertexValueFrom);
-        //check that exists
+        //check if in graph
+        getVertex(vertexValueFrom);
         getVertex(vertexValueTo);
 
         Map<T, VisitedVertex<T>> paths = new HashMap<>();
         Set<T> shouldBeVisited = new HashSet<>();
         
         paths.put(vertexValueFrom, new VisitedVertex<>(null, 0));
-        shouldBeVisited.add(vertexFrom.getValue());
+        shouldBeVisited.add(vertexValueFrom);
 
         while (!shouldBeVisited.isEmpty()) {
-            Set<T> updatedVertex = new HashSet<>();
+            Set<T> vertexWithUpdatedDistance = new HashSet<>();
             for (T currentVertex : shouldBeVisited) {
                 long currentDistance = paths.get(currentVertex).getDistance();
                 for (T nextVertex : vertexes.get(currentVertex).getEdgesTo()) {
@@ -63,11 +70,11 @@ public abstract class Graph<T> {
                             .orElse(Long.MAX_VALUE);
                     if (nextDistance > currentDistance + 1) {
                         paths.put(nextVertex, new VisitedVertex<>(currentVertex, currentDistance + 1));
-                        updatedVertex.add(nextVertex);
+                        vertexWithUpdatedDistance.add(nextVertex);
                     }
                 }
             }
-            shouldBeVisited = updatedVertex;
+            shouldBeVisited = vertexWithUpdatedDistance;
         }
 
         return collectPath(vertexValueFrom, vertexValueTo, paths);
@@ -96,7 +103,7 @@ public abstract class Graph<T> {
      *
      * @param vertexValueFrom vertex from
      * @param vertexValueTo vertex to
-     * @throws IllegalAccessException if from or to vertex is not in the graph
+     * @throws IllegalAccessException if from or to vertex is null or not in the graph
      */
     protected void addPath(T vertexValueFrom, T vertexValueTo) {
         Vertex<T> vertexFrom = getVertex(vertexValueFrom);
@@ -105,9 +112,12 @@ public abstract class Graph<T> {
     }
 
     private Vertex<T> getVertex(T vertexValue) {
+        if (vertexValue == null) {
+            throw new IllegalArgumentException("Value is null");
+        }
         Vertex<T> vertex = vertexes.get(vertexValue);
         if (vertex == null) {
-            throw new IllegalArgumentException("Vertex" + vertex + " doesn't exist");
+            throw new IllegalArgumentException("Vertex" + vertexValue + " doesn't exist");
         }
         return vertex;
     }
@@ -116,7 +126,7 @@ public abstract class Graph<T> {
         private final V previousVertex;
         private final long distance;
 
-        public VisitedVertex(V previousVertex, long distance) {
+        private VisitedVertex(V previousVertex, long distance) {
             this.previousVertex = previousVertex;
             this.distance = distance;
         }
@@ -152,7 +162,7 @@ public abstract class Graph<T> {
         }
     }
 
-    public static class Vertex<V> {
+    static class Vertex<V> {
         private final V value;
         private final Set<V> edgesTo;
 

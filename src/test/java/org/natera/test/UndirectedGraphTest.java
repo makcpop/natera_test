@@ -17,6 +17,20 @@ import static org.natera.test.TestUtils.getVertexesMap;
 class UndirectedGraphTest {
 
     @Test
+    public void testAllMethods_nullSafe() {
+        Graph<Integer> graph = getGraph();
+        graph.addVertex(1);
+        graph.addVertex(2);
+        assertThrows(IllegalArgumentException.class, () -> graph.addVertex(null));
+        assertThrows(IllegalArgumentException.class, () -> graph.addEdge(null, null));
+        assertThrows(IllegalArgumentException.class, () -> graph.addEdge(1, null));
+        assertThrows(IllegalArgumentException.class, () -> graph.addEdge(null, 2));
+        assertThrows(IllegalArgumentException.class, () -> graph.getPath(null, null));
+        assertThrows(IllegalArgumentException.class, () -> graph.getPath(null, 2));
+        assertThrows(IllegalArgumentException.class, () -> graph.getPath(1, null));
+    }
+
+    @Test
     public void testAddVertex() throws Exception {
         Graph<Integer> graph = getGraph();
         graph.addVertex(1);
